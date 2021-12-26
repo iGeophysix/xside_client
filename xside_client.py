@@ -83,25 +83,25 @@ class XSide:
         params = {"page_size": page_size, "page": page}
         return self.__get(f"{self._host}/api/client/{client_id or ''}", params=params)
 
-    def get_items(self, item_id: int = None, page_size=100, page=0):
+    def get_items(self, item_id: int = None, page_size: int = 100, page: int = 0):
         """
         Get items
         :param item_id: (optional) item_id to retrieve
-        :params page_size: (optional)
+        :params page_size: (optional) number of items per page
         :params page: (optional) page number starting from 0
         :return:
         """
         params = {"page_size": page_size, "page": page}
         return self.__get(f"{self._host}/api/item/{item_id or ''}", params=params)
 
-    def fetch_image(self, path):
+    @staticmethod
+    def fetch_image(path: str):
         """
         Fetches the image by path
         :param path: path on storage
         :return:
         """
-        image = io.BytesIO(s3_client.load_from_s3(path))
-        return image
+        return io.BytesIO(s3_client.load_from_s3(path))
 
 
 if __name__ == "__main__":
