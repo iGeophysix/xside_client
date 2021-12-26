@@ -35,6 +35,7 @@ class XSide:
         resp = requests.post(f"{self._host}/api/token/", json=body)
         if resp.status_code != 200:
             logger.error(resp.json())
+            raise XSide.Unauthorized("Authorization failed")
         else:
             logger.info("Authorization successful")
             self.__tokens = resp.json()
@@ -51,10 +52,15 @@ class XSide:
 
     @property
     def _headers(self):
-        headers = {
-            "Authorization": f'Bearer {self.__tokens["access"]}'
-        }
-        return headers
+
+        access_token = self.__tokens.get("access", None)
+        if access_token:
+            headers = {
+                "Authorization": f'Bearer {self.__tokens["access"]}'
+            }
+            return headers
+        else:
+            raise XSide.Unauthorized("Access token is not available")
 
     def __get(self, url, *args, **kwargs):
         for _ in range(3):
@@ -107,7 +113,7 @@ if __name__ == "__main__":
     print(xside.get_clients(page_size=2, page=1))
     print(xside.get_clients(1))
     print(xside.get_items())
-    print(xside.get_items(52))
+    print(xside.get_items(1))
     print(xside.get_items(page_size=1))
     print(xside.get_items(page_size=1, page=1))
     image_data = xside.fetch_image(path='images/Client1/Test 6/whatsapp.png')
