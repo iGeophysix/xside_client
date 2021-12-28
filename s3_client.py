@@ -7,16 +7,12 @@ import logging
 import boto3
 import lz4.block
 from botocore.exceptions import ClientError
+
 from settings import AWS_S3_ENDPOINT_URL as S3_HOST, AWS_STORAGE_BUCKET_NAME as S3_BUCKET, \
     AWS_S3_ACCESS_KEY_ID as S3_USER, AWS_S3_SECRET_ACCESS_KEY as S3_PASSWORD
 
 logger = logging.getLogger('s3_client')
 logger.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-logger.addHandler(ch)
 
 S3 = boto3.resource('s3',
                     endpoint_url=S3_HOST,
