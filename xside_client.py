@@ -1,5 +1,8 @@
 import io
+import json
 import logging
+from datetime import datetime, timezone
+from enum import Enum
 
 import requests
 from PIL import Image
@@ -7,6 +10,15 @@ from PIL import Image
 import s3_client
 
 logger = logging.getLogger(__name__)
+
+
+class LogEvent(str, Enum):
+    """Log Event enum"""
+    START = 'S'
+    SHOW = 'SH'
+    STOP = 'P'
+    WARNING = 'WA'
+    ERROR = 'ER'
 
 
 class XSide:
@@ -65,7 +77,17 @@ class XSide:
     def __get(self, url, *args, **kwargs):
         for _ in range(3):
             resp = requests.get(url, *args, headers=self._headers, **kwargs)
-            if resp.status_code == 200:
+            if 200 <= resp.status_code < 300:
+                return resp.json()
+            elif resp.status_code == 401 and resp.json().get("code", None) == "token_not_valid":
+                self._refresh_tokens()
+
+        raise XSide.ClientError(f"Unexpected response from the server. Response code: {resp.status_code}. Message: {resp.json()}")
+
+    def __post(self, url, *args, **kwargs):
+        for _ in range(3):
+            resp = requests.post(url, *args, headers=self._headers, **kwargs)
+            if 200 <= resp.status_code < 300:
                 return resp.json()
             elif resp.status_code == 401 and resp.json().get("code", None) == "token_not_valid":
                 self._refresh_tokens()
@@ -103,6 +125,29 @@ class XSide:
         """
         return io.BytesIO(s3_client.load_from_s3(path))
 
+    def send_log(self, event: LogEvent, item_file: str = "", data: dict = None, timestamp: datetime = None, lat: float = 0.0, lon: float = 0.0):
+        '''send log event to server'''
+        timestamp_str = datetime.now(timezone.utc).isoformat() if timestamp is None else timestamp.astimezone(timezone.utc).isoformat()
+        payload = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "event": event,
+                        "item_file": item_file,
+                        "data": json.dumps(data) if data is not None else None,
+                        "timestamp": timestamp_str
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [lon, lat]
+                    }
+                }
+            ]
+        }
+        resp = self.__post(f"{self._host}/api/incoming", json=payload)
+        return resp
 
 if __name__ == "__main__":
     from settings import XSIDE_HOST, XSIDE_USER, XSIDE_PASSWORD

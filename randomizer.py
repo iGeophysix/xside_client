@@ -17,7 +17,7 @@ def hist(array):
     return out
 
 
-def get_images_in_point(gdf: GeoDataFrame, point: Point) -> str:
+def get_image_in_point(gdf: GeoDataFrame, point: Point) -> str:
     """
     Get image path to show in current point
     """
@@ -32,5 +32,5 @@ if __name__ == "__main__":
     db = DB()
     df = db.get_items()
     current_point = Point(37.572631, 55.745983, )
-    random_list = [get_images_in_point(df, current_point) for _ in range(1000)]
+    random_list = [get_image_in_point(df, current_point) for _ in range(1000)]
     print(hist(random_list))
