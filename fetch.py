@@ -37,8 +37,8 @@ def fetch():
             break
         page += 1
 
-    for item in buf['data']:  # download images
-        download_images(item)
+        for item in buf['data']:  # download images
+            download_images(item)
 
     db = DB()
     db.create_items_table()  # clear old records
